@@ -1,57 +1,54 @@
 #!/usr/bin/python3
-"""
-Python script takes URL from stdin and compute exact metrics
-"""
-import re
+
 import sys
 
 
-def print_log_parsing(CODES, file_size):
+def print_msg(dict_sc, total_file_size):
     """
-    function that print parsing logs
-    args:
-        codes: is a dictionary of status code
-        file_size: is the size of status
+    Method to print
+    Args:
+        dict_sc: dict of status codes
+        total_file_size: total of the file
+    Returns:
+        Nothing
     """
-    print("File size: {}".format(file_size))
-    for key, value in sorted(CODES.items()):
-        print("{}: {}".format(key, value))
+
+    print("File size: {}".format(total_file_size))
+    for key, val in sorted(dict_sc.items()):
+        if val != 0:
+            print("{}: {}".format(key, val))
 
 
-def run():
-    """"
-    function that search the status code and size number
-    """
-    PATTERN = '([\\d]{3})\\s([\\d]{1,4})$'
-    CODES = {}
-    STOP = 10
-    step = 1
-    size = 0
+total_file_size = 0
+code = 0
+counter = 0
+dict_sc = {"200": 0,
+           "301": 0,
+           "400": 0,
+           "401": 0,
+           "403": 0,
+           "404": 0,
+           "405": 0,
+           "500": 0}
 
-    while True:
+try:
+    for line in sys.stdin:
+        parsed_line = line.split()  # ✄ trimming
+        parsed_line = parsed_line[::-1]  # inverting
 
-        try:
-            line = input()
+        if len(parsed_line) > 2:
+            counter += 1
 
-            status, file_size = re.search(PATTERN, line).group().split()
+            if counter <= 10:
+                total_file_size += int(parsed_line[0])  # file size
+                code = parsed_line[1]  # status code
 
-            size += int(file_size)
+                if (code in dict_sc.keys()):
+                    dict_sc[code] += 1
 
-            try:
-                if CODES[status]:
-                    CODES[status] += 1
-            except KeyError:
-                CODES[status] = 1
+            if (counter == 10):
+                print_msg(dict_sc, total_file_size)
+                counter = 0
 
-            if step == STOP:
-                print_log_parsing(CODES, size)
-                step = 1
-
-            step += 1
-        except (KeyboardInterrupt, EOFError):
-            print_log_parsing(CODES, size)
-            exit()
-
-
-if __name__ == '__main__':
-    run()
+finally:
+    print_msg(dict_sc, total_file_size)
